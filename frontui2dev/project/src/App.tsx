@@ -28,6 +28,10 @@ import {
   Crown,
   Flame
 } from 'lucide-react';
+import StreamerSetup from './components/StreamerSetup';
+import Leaderboard from './components/Leaderboard';
+import GamingCommunity from './components/GamingCommunity';
+import { StreamerConfig } from './types/streamer';
 
 interface Tip {
   id: string;
@@ -48,8 +52,42 @@ interface StreamerStats {
   rank: string;
 }
 
-const Header: React.FC = () => {
+interface HeaderProps {
+  streamerConfig?: StreamerConfig | null;
+  onSetupClick?: () => void;
+}
+
+const Header: React.FC<HeaderProps> = ({ streamerConfig, onSetupClick }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [showWalletModal, setShowWalletModal] = useState(false);
+
+  const handleNavClick = (section: string) => {
+    const element = document.getElementById(section);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
+    setIsMenuOpen(false);
+  };
+
+  const handleConnectWallet = () => {
+    setShowWalletModal(true);
+    // Aquí iría la lógica real de conexión de wallet
+    setTimeout(() => {
+      setShowWalletModal(false);
+      alert('🎮 Wallet connection feature coming soon! Stay tuned for Stellar integration.');
+    }, 2000);
+  };
+
+  const handleStartGaming = () => {
+    // Scroll to dashboard or show gaming modal
+    const dashboardElement = document.getElementById('dashboard');
+    if (dashboardElement) {
+      dashboardElement.scrollIntoView({ behavior: 'smooth' });
+    } else {
+      alert('🚀 Ready to start gaming? Configure your streamer profile first!');
+      if (onSetupClick) onSetupClick();
+    }
+  };
 
   return (
     <header className="bg-gray-900/95 backdrop-blur-md fixed w-full z-50 border-b border-cyan-500/20">
@@ -71,10 +109,10 @@ const Header: React.FC = () => {
           </div>
           
           <nav className="hidden md:flex space-x-8">
-            <a href="#features" className="text-gray-300 hover:text-cyan-400 transition-colors font-medium">Gaming</a>
-            <a href="#blockchain" className="text-gray-300 hover:text-cyan-400 transition-colors font-medium">Blockchain</a>
-            <a href="#dashboard" className="text-gray-300 hover:text-cyan-400 transition-colors font-medium">Dashboard</a>
-            <a href="#leaderboard" className="text-gray-300 hover:text-cyan-400 transition-colors font-medium">Leaderboard</a>
+            <button onClick={() => handleNavClick('features')} className="text-gray-300 hover:text-cyan-400 transition-colors font-medium">Gaming</button>
+            <button onClick={() => handleNavClick('features')} className="text-gray-300 hover:text-cyan-400 transition-colors font-medium">Blockchain</button>
+            <button onClick={() => handleNavClick('dashboard')} className="text-gray-300 hover:text-cyan-400 transition-colors font-medium">Dashboard</button>
+            <button onClick={() => handleNavClick('leaderboard')} className="text-gray-300 hover:text-cyan-400 transition-colors font-medium">Leaderboard</button>
           </nav>
 
           <div className="hidden md:flex items-center space-x-4">
@@ -82,10 +120,39 @@ const Header: React.FC = () => {
               <Coins className="w-4 h-4 text-cyan-400" />
               <span className="text-sm text-gray-300 font-mono">1 XLM = $0.12</span>
             </div>
-            <button className="px-4 py-2 text-gray-300 hover:text-cyan-400 transition-colors font-medium">
-              Connect Wallet
+            
+            {streamerConfig?.isConfigured ? (
+              <div className="flex items-center space-x-2 bg-green-500/10 px-3 py-2 rounded-full border border-green-500/30">
+                <Shield className="w-4 h-4 text-green-400" />
+                <span className="text-sm text-green-400 font-medium">{streamerConfig.name}</span>
+              </div>
+            ) : (
+              <button 
+                onClick={onSetupClick}
+                className="flex items-center space-x-2 bg-orange-500/10 px-3 py-2 rounded-full border border-orange-500/30 hover:bg-orange-500/20 transition-colors"
+              >
+                <Settings className="w-4 h-4 text-orange-400" />
+                <span className="text-sm text-orange-400 font-medium">Configurar</span>
+              </button>
+            )}
+            
+            <button 
+              onClick={handleConnectWallet}
+              className="px-4 py-2 text-gray-300 hover:text-cyan-400 transition-colors font-medium relative"
+            >
+              {showWalletModal ? (
+                <span className="flex items-center space-x-2">
+                  <div className="w-4 h-4 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin"></div>
+                  <span>Connecting...</span>
+                </span>
+              ) : (
+                'Connect Wallet'
+              )}
             </button>
-            <button className="bg-gradient-to-r from-cyan-500 to-purple-600 text-white px-6 py-2 rounded-full hover:from-cyan-600 hover:to-purple-700 transition-all transform hover:scale-105 font-semibold">
+            <button 
+              onClick={handleStartGaming}
+              className="bg-gradient-to-r from-cyan-500 to-purple-600 text-white px-6 py-2 rounded-full hover:from-cyan-600 hover:to-purple-700 transition-all transform hover:scale-105 font-semibold"
+            >
               Start Gaming
             </button>
           </div>
@@ -611,12 +678,125 @@ const Dashboard: React.FC = () => {
 };
 
 const App: React.FC = () => {
+  const [isConfigured, setIsConfigured] = useState<boolean | null>(null);
+  const [streamerConfig, setStreamerConfig] = useState<StreamerConfig | null>(null);
+  const [showSetup, setShowSetup] = useState(false);
+
+  useEffect(() => {
+    // Verificar si el streamer ya está configurado
+    const checkConfiguration = () => {
+      const savedConfig = localStorage.getItem('streamerConfig');
+      if (savedConfig) {
+        try {
+          const config = JSON.parse(savedConfig) as StreamerConfig;
+          if (config.isConfigured) {
+            setIsConfigured(true);
+            setStreamerConfig(config);
+          } else {
+            setIsConfigured(false);
+          }
+        } catch (error) {
+          console.error('Error parsing saved config:', error);
+          setIsConfigured(false);
+        }
+      } else {
+        setIsConfigured(false);
+      }
+    };
+
+    checkConfiguration();
+  }, []);
+
+  const handleSetupComplete = (config: StreamerConfig) => {
+    setStreamerConfig(config);
+    setIsConfigured(true);
+    setShowSetup(false);
+  };
+
+  const handleStartSetup = () => {
+    setShowSetup(true);
+  };
+
+  const handleSkipSetup = () => {
+    setShowSetup(false);
+  };
+
+  // Mostrar loading mientras verificamos la configuración
+  if (isConfigured === null) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900/20 to-cyan-900/20 flex items-center justify-center">
+        <div className="text-center">
+          <div className="bg-gradient-to-r from-cyan-500 to-purple-600 p-4 rounded-full w-fit mx-auto mb-4 animate-pulse">
+            <Gamepad2 className="w-8 h-8 text-white" />
+          </div>
+          <h2 className="text-2xl font-bold text-white mb-2">TipStreamer</h2>
+          <p className="text-gray-300">Cargando configuración...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Mostrar setup si se está configurando
+  if (showSetup) {
+    return (
+      <StreamerSetup 
+        onComplete={handleSetupComplete}
+        onSkip={handleSkipSetup}
+      />
+    );
+  }
+
+  // Si no está configurado, mostrar opción para configurar
+  if (!isConfigured) {
+    return (
+      <div className="min-h-screen bg-gray-900">
+        <Header onSetupClick={handleStartSetup} />
+        <div className="pt-32 pb-20 bg-gradient-to-br from-gray-900 via-purple-900/20 to-cyan-900/20">
+          <div className="container mx-auto px-6">
+            <div className="max-w-2xl mx-auto text-center">
+              <div className="bg-gradient-to-r from-cyan-500/20 to-purple-500/20 p-6 rounded-full w-fit mx-auto mb-6">
+                <Settings className="w-12 h-12 text-cyan-400" />
+              </div>
+              <h1 className="text-4xl font-bold text-white mb-4">
+                ¡Bienvenido a TipStreamer!
+              </h1>
+              <p className="text-xl text-gray-300 mb-8">
+                Para comenzar a recibir tips en XLM, necesitas configurar tu perfil de streamer.
+              </p>
+              <div className="space-y-4">
+                <button
+                  onClick={handleStartSetup}
+                  className="bg-gradient-to-r from-cyan-500 to-purple-600 text-white px-8 py-4 rounded-xl text-lg font-semibold hover:from-cyan-600 hover:to-purple-700 transition-all transform hover:scale-105 flex items-center justify-center space-x-2 mx-auto"
+                >
+                  <Rocket className="w-5 h-5" />
+                  <span>Configurar Streamer</span>
+                </button>
+                <button
+                  onClick={() => setIsConfigured(true)}
+                  className="block mx-auto text-gray-400 hover:text-gray-300 transition-colors"
+                >
+                  Continuar sin configurar (solo vista)
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <Features />
+        <GamingCommunity />
+        <Leaderboard />
+      </div>
+    );
+  }
+
+  // Mostrar la aplicación completa si está configurado
   return (
     <div className="min-h-screen bg-gray-900">
-      <Header />
+      <Header streamerConfig={streamerConfig} onSetupClick={handleStartSetup} />
       <Hero />
       <Features />
       <Dashboard />
+      <GamingCommunity />
+      <Leaderboard />
     </div>
   );
 };
