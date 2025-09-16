@@ -169,7 +169,6 @@ impl TipStreamers {
         }
     }
 
-
     pub fn tip(
         e: Env,
         payer: Address,
