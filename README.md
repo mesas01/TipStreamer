@@ -72,15 +72,9 @@ Open: `http://localhost:5173/`
 
 ---
 
-## 📸 Screenshots
-
-![UI Preview](./screenshot.png)
-
----
-
 ## 🤝 Team
 
-Built with ❤️ by **Juan Diego Arias Duran** and team for **Meridian Hackathon 2025**.
+Built with ❤️ by **Santiago Mesa, Juliana Lugo, Martha Lagunas, sebastian melo** and team for **Meridian Hackathon 2025**.
 
 ---
 
